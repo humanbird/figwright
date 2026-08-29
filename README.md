@@ -35,6 +35,7 @@ Projekts und fährt danach `/verify`. `/verify` misst und legt die Tabelle vor.
 | **weicht ab** | Beide Werte liegen vor und unterscheiden sich. Das Einzige, was Arbeit auslöst. |
 | **Soll unbelegt (Grund)** | Figma gibt dazu nichts her. **Kein Fehler** — nicht raten, nicht anpassen. |
 | **nicht messbar (Grund)** | Die Seite gibt den Wert nicht her — meist das falsche Element. Selektor schärfen. |
+| **Richtwert (Hug-Knoten)** | Breite/Höhe ohne feste Größe stammen aus Figmas eigener Textmessung. Wird gezeigt, löst keine Arbeit aus. |
 
 Toleranzen: Typografie 0,1 px; Breite/Höhe 0,5 px (Gerätepixel-Rundung);
 Innenabstände, Gap, Radius und Rahmenbreite 0; Farben 0, auch im Alphakanal.
