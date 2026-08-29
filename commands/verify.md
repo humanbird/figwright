@@ -151,10 +151,15 @@ Toleranzen:
   stammt das Soll aus Figmas eigener Textmessung (siehe Schritt 2). Eine
   Differenz von wenigen Pixeln ist dann Font-Rendering, kein Baufehler. Zustand
   `Richtwert (Δ …, Hug-Knoten)` — die Zeile wird gezeigt, löst aber keine Arbeit
-  aus. Beheben nur, wenn die Differenz so groß ist, dass sie nicht mehr aus dem
-  Textsatz kommen kann (Faustregel: mehr als 2 % der Sollbreite oder ein
-  fehlendes Padding erklärt sie besser). Ohne diese Regel „behebst" du eine
+  aus; das gilt auch bei `Δ 0px`, der Zustand bleibt dann `Richtwert (Δ 0px)`
+  und wird nicht zu `stimmt`. Ohne diese Regel „behebst" du eine
   Font-Rendering-Differenz — genau das, was der Loop nicht tun soll.
+  **Ausnahme:** Übersteigt die Differenz **2 % der Sollbreite UND 3 px**, kommt
+  sie nicht mehr aus dem Textsatz (ein fehlendes Padding oder ein zerschossenes
+  Layout erklärt sie besser). Dann ist der Zustand `weicht ab` und die Zeile
+  löst Arbeit aus wie jede andere. Beide Schwellen müssen überschritten sein:
+  2 % von 67 px sind 1,3 px und liegen unter der normalen Drift zwischen Figmas
+  und Chromes Textmetrik — allein gälte die Regel genau dort, wo sie schützen soll.
 
 Schreib in den Kopf der Tabelle, was du gemessen hast: Knoten-ID, URL,
 Selektor und wie viele Elemente er trifft, gewähltes Element, Textträger,
@@ -186,14 +191,20 @@ tragbar ist, entscheidest du und berichtest es.
   obendrauf und macht 42 daraus. Ohne Regel terminiert der Loop hier nie oder nur
   durch stilles Verbiegen (Padding auf 11px drücken — verschiebt den Text, sieht
   keine Zeile). Zwei Techniken sind legitim, such dir eine aus:
-  - `border` behalten **und** die Größe explizit setzen (`height`/`width` aus den
-    Metadaten) **mit** `box-sizing: border-box`. Alle Rahmenzeilen messen sich
-    normal; Innenabstände bleiben die aus dem Design-Kontext.
-  - `box-shadow: inset 0 0 0 1px <farbe>` statt `border`. Dann ist
+  - **Technik A, nur bei fester Größe:** `border` behalten **und** die Größe
+    explizit setzen (`height`/`width` aus den Metadaten) **mit**
+    `box-sizing: border-box`. Alle Rahmenzeilen messen sich normal;
+    Innenabstände bleiben die aus dem Design-Kontext. Bei einem **Hug**-Knoten
+    ist sie verboten, soweit sie die Breite betrifft: eine feste `width` nagelt
+    fest, was hugen soll, und späterer Text verschwindet lautlos unter
+    `overflow-clip`. Am Hug-Knoten höchstens `height` festsetzen, nie `width`.
+  - **Technik B, immer erlaubt und bei Hug die einzige für die Breite:**
+    `box-shadow: inset 0 0 0 1px <farbe>` statt `border`. Dann ist
     `borderTopWidth` echt `0px` — **nicht** als Abweichung melden, sondern
-    Rahmenbreite, -stil und -farbe aus dem `boxShadow`-Wert lesen und die Zeilen
-    mit dem Vermerk „aus inset box-shadow" führen. Das ist eine gemessene
-    Tatsache, keine Nachsicht.
+    Rahmenbreite und -farbe aus dem `boxShadow`-Wert lesen und die Zeilen mit
+    dem Vermerk „aus inset box-shadow" führen. Ein Shadow trägt keinen Stil:
+    der **Rahmenstil gilt bei dieser Technik als `solid`**. Das ist eine
+    gemessene Tatsache, keine Nachsicht.
 
   Was du **nicht** tust: Innenabstände gegen das Design verkleinern, um die Höhe
   zu retten. Das verschiebt den Text und die Tabelle merkt es nicht.
