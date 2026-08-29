@@ -1,0 +1,22 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "sollwert",
+  "description": "Soll/Ist-Abgleich zwischen Figma-Knoten und gebauter Komponente",
+  "owner": {
+    "name": "Uwe Heinrichs",
+    "url": "https://github.com/humanbird"
+  },
+  "metadata": {
+    "description": "Soll/Ist-Abgleich zwischen Figma-Knoten und gebauter Komponente",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "sollwert",
+      "source": "./",
+      "description": "Zwei Slash-Commands, die eine gebaute Komponente im echten Browser property-genau gegen ihren Figma-Knoten messen",
+      "version": "0.1.0",
+      "category": "development"
+    }
+  ]
+}

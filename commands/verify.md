@@ -15,15 +15,21 @@ Ohne `node-id` im Link geht es nicht weiter — dann frag nach einem knotengenau
 **Kontrollier zuerst, dass du den richtigen Knoten hast.** Die `data-node-id` am
 Wurzelelement des Design-Kontexts muss die node-id aus dem Link sein (`123-456`
 im Link = `123:456` im Kontext). Stimmt sie nicht, misst du gegen einen fremden
-Knoten — sag es und hol den richtigen. Trägt das Wurzelelement gar keine
-`data-node-id` (etwa bei einem Code-Connect-Treffer, der gemappten Projektcode
-zurückgibt), ist die Kontrolle nicht durchführbar: dann gilt der Knoten aus
-`get_metadata` als Bezug, und das gehört als Hinweis in den Tabellenkopf.
+Knoten — sag es und hol den richtigen.
+
+Kommt statt Tailwind-Code gemappter Projektcode zurück, hat Code Connect
+gegriffen. Für die Messung brauchst du das rohe Design-Soll, nicht die
+Projekt-Übersetzung: hol den Kontext erneut mit `disableCodeConnect: true` und
+vermerk das im Tabellenkopf. Trägt das Wurzelelement auch dann keine
+`data-node-id`, gilt der Knoten aus `get_metadata` als Bezug — ebenfalls in den
+Kopf.
 
 ## 2. Soll ableiten — nur was wörtlich dasteht
 
 Der Design-Kontext ist React mit Tailwind-Klassen in arbiträrer Schreibweise,
-z. B. `gap-[var(--sds-size-space-200,8px)]`. Lies daraus:
+z. B. `gap-[var(--sds-size-space-200,8px)]`. Alle Leseregeln hier gelten für
+dieses React+Tailwind-Ausgabeformat des Dev-Mode-MCP; liefert er eines Tages
+etwas anderes, sind sie neu zu prüfen. Lies daraus:
 
 - **Wert aus einer Klasse:** `p-[…]`, `px-/py-/pt-/pr-/pb-/pl-[…]`, `gap-[…]`,
   `gap-x-/gap-y-[…]`, `rounded-[…]`, `w-/h-/size-[…]`, `bg-[…]`,
@@ -34,9 +40,15 @@ z. B. `gap-[var(--sds-size-space-200,8px)]`. Lies daraus:
   gilt dessen Wert; sonst der Rückfallwert. Tokenwerte sind einheitenlos
   (`"8"` = 8px). Steht der Token nirgends und gibt es keinen Rückfallwert:
   Lücke.
+- **`font-['Familie:Schnitt']`:** vor dem Doppelpunkt steht die Familie, danach
+  der Schnitt — `font-['Whyte:Regular']` heißt Familie Whyte, Schnitt Regular
+  (= 400), `:Bold` = 700, `:Medium` = 500. Das ist die Quelle für die
+  Schriftschnitt-Zeile, wenn keine eigene `font-[…]`-Gewichtsklasse dasteht.
 - **Textstil:** der `Font(family, style, size, weight, lineHeight, letterSpacing)`-
   Block aus den Variablen bzw. dem Hinweis „These styles are contained in the
-  design" ist die verlässlichste Quelle für Zeilenhöhe und Laufweite. Seine
+  design" ist die verlässlichste Quelle für Zeilenhöhe und Laufweite. Dieselbe
+  Hinweiszeile führt auch **Farbstile** (etwa `Fill/Neutral/Primary: #1e1e1e`) —
+  sie ist Farbquelle, nicht nur Font-Träger, und löst benannte Farbklassen auf. Seine
   Zahlen sind **Faktoren**, wo keine Einheit dabeisteht: `lineHeight: 1` heißt
   1 × Schriftgröße. Dasselbe gilt für `leading-none` (= Faktor 1) und
   `leading-[1.4]`. Unentscheidbar ist nur der Fall in den Fallstricken unten:
@@ -223,8 +235,14 @@ tragbar ist, entscheidest du und berichtest es.
   das kann ebenso 24px meinen → Lücke, kein Produkt.
 - **`leading-[0]`** an einem Wrapper ist ein Figma-Artefakt; die echte
   Zeilenhöhe steht im `Font(…)`-Block oder am inneren Textelement.
-- **Nicht-arbiträre Klassen** wie `p-2` oder `border-2` kannst du nicht
-  auflösen, ohne die Tailwind-Konfiguration des Projekts zu kennen. Lücke —
-  und nenn die Klasse im Grund.
+- **Nicht-arbiträre Klassen sind lesbar, nicht Lücke.** Sie stammen aus Figmas
+  Generator, nicht aus der Tailwind-Konfiguration deines Projekts, und haben
+  dort feste Bedeutung: `border-<n>`, `p-<n>`, `gap-<n>`, `rounded-<n>` und
+  Geschwister heißen **n Pixel** — `border-10` ist ein 10-px-Rahmen und wird
+  gemessen. Benannte Farben (`text-white`, `bg-black`) löst du über die Zeile
+  „These styles are contained in the design" und `get_variable_defs` auf.
+  Lücke ist nur, was an keiner dieser Stellen auftaucht; dann nenn die Klasse
+  im Grund. Behandelst du solche Klassen pauschal als Lücke, läuft ein zu
+  dicker Rahmen ungemessen durch und die Tabelle meldet ein Falsch-Bestanden.
 - **Zwei `border-[…]`-Klassen:** eine ist die Breite, eine die Farbe. Ordne
   nach dem aufgelösten Wert zu, nicht nach der Reihenfolge.

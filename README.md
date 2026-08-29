@@ -3,20 +3,31 @@
 Zwei Slash-Commands, die eine gebaute Komponente im echten Browser
 property-genau gegen ihren Figma-Knoten messen.
 
+Figma-MCP und ein Screenshot-Loop bringen dich auf „sieht ungefähr gleich aus".
+sollwert sagt dir: `font-size` ist 15 statt 16 — Zeile für Zeile, mit Zahlen.
+
 Kein Code, keine Abhängigkeiten, keine Tokens, keine Konfiguration. Das ganze
 Werkzeug sind zwei Markdown-Dateien: der Agent zieht das Soll über seinen
 Figma-MCP und misst das Ist mit seinen eigenen Browser-Tools.
 
 ## Drei Schritte
 
-1. Figma-MCP verbinden (Dev-Mode-MCP der Figma-App).
-2. Plugin installieren: `/plugin install humanbird/sollwert`
+1. **Figma-MCP** verbinden (Dev-Mode-MCP der Figma-App) **und ein Browser-Werkzeug,
+   das JavaScript auf der Seite auswerten kann** (etwa der Chrome-DevTools-MCP).
+   Ohne dieses Werkzeug kann `/sollwert:verify` nicht messen.
+2. Plugin installieren:
+   ```
+   /plugin marketplace add humanbird/sollwert
+   /plugin install sollwert@sollwert
+   ```
    — oder ohne Plugin: `commands/implement.md` und `commands/verify.md` nach
-   `.claude/commands/` im Projekt kopieren.
-3. `/implement <figma-link mit node-id>`
+   `.claude/commands/` im Projekt kopieren (dann heißen sie `/implement` und
+   `/verify`).
+3. `/sollwert:implement <figma-link mit node-id>`
 
-`/implement` baut die Komponente aus dem Figma-Knoten mit den Tokens des
-Projekts und fährt danach `/verify`. `/verify` misst und legt die Tabelle vor.
+`/sollwert:implement` baut die Komponente aus dem Figma-Knoten mit den Tokens
+des Projekts und fährt danach `/sollwert:verify`. Das misst und legt die
+Tabelle vor.
 
 ## Die Tabelle
 
