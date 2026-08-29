@@ -1,0 +1,11 @@
+{
+  "name": "sollwert",
+  "version": "0.1.0",
+  "description": "Zwei Slash-Commands, die eine gebaute Komponente property-genau gegen ihren Figma-Knoten messen — ohne eigenen Code, ohne Tokens, ohne Setup.",
+  "author": {
+    "name": "Uwe Heinrichs"
+  },
+  "homepage": "https://github.com/humanbird/sollwert",
+  "license": "MIT",
+  "keywords": ["figma", "design-tokens", "soll-ist", "slash-commands"]
+}
