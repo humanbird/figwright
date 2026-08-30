@@ -54,6 +54,7 @@ dabei nichts.
 | **Soll unbelegt (Grund)** | Figma gibt dazu nichts her. **Kein Fehler** — nicht raten, nicht anpassen. |
 | **nicht messbar (Grund)** | Die Seite gibt den Wert nicht her — meist das falsche Element. Selektor schärfen. |
 | **Richtwert (Δ …, Hug-Knoten)** | Breite/Höhe eines inhaltsbemessenen Knotens stammen aus Figmas eigener Textmessung. Wird gezeigt, löst keine Arbeit aus. |
+| **Kontextgröße (Δ …, füllender Knoten)** | Breite/Höhe eines füllenden Knotens sind die aus Figmas Ausschnitt, keine feste Vorgabe. Wird gezeigt, löst keine Arbeit aus. |
 
 Toleranzen: Typografie 0,1 px; Breite/Höhe 0,5 px (Gerätepixel-Rundung);
 Innenabstände, Gap, Radius und Rahmenbreite 0; Farben 0, auch im Alphakanal.

@@ -76,22 +76,33 @@ etwas anderes, sind sie neu zu prüfen. Lies daraus:
     Generator setzt sie jeder Wurzel unkonditional, unabhängig davon, wie der
     Knoten sich bemisst. Sie ist dort **weder Hug- noch Füll-Indiz** — ignorier
     sie vollständig.
-  - **Aussagekräftig ist die Kind-Ansicht:** derselbe Knoten, gezogen als Teil
-    seines Elternknotens. Dort schreibt der Generator, was wirklich gilt. Hast
-    du sie nicht, zieh den Elternknoten dazu oder entscheide über `get_metadata`
-    und den Screenshot.
+  - **Aussagekräftig wäre die Kind-Ansicht:** derselbe Knoten, gezogen als Teil
+    seines Elternknotens — dort schreibt der Generator, was wirklich gilt.
+  - **Bei Varianten aus einem Component-Set gibt es sie nicht.** Ziehst du den
+    Elternknoten, liefert der Generator die Variante erneut als eigene Wurzel,
+    nicht als Kind. Das ist der Normalfall, nicht die Ausnahme. Dann ist der
+    **Hauptweg** `get_metadata` plus Screenshot: passt die Größe genau zu
+    Padding + Inhalt, bemisst sich der Knoten nach seinem Inhalt; füllt er
+    sichtbar seinen Rahmen, ist er füllend.
 
-  In der Kind-Ansicht gilt dann:
-  - **Hug** (Größe folgt dem Inhalt): `shrink-0` **ohne** `w-`/`h-`/`size-`-Klasse
-    — oder Screenshot und Metadaten zeigen eine Größe, die genau Padding +
-    Inhalt ist. Dann ist die Metadaten-Größe ein **Richtwert**, kein hartes
+  Und zwar **je Achse einzeln**: `w-full` mit `shrink-0` und ohne `h-`-Klasse
+  heißt breitenfüllend **und** höhen-hugend. Stuf Breite und Höhe getrennt ein;
+  jede Nachsicht unten gilt nur für die Achse, für die sie hergeleitet ist.
+
+  - **Hug** (Größe folgt dem Inhalt): in der Kind-Ansicht `shrink-0` **ohne**
+    `w-`/`h-`/`size-`-Klasse auf dieser Achse — sonst über Metadaten und
+    Screenshot. Dann ist die Metadaten-Größe ein **Richtwert**, kein hartes
     Soll: Figma misst den Text mit eigener Metrik, der Browser rendert denselben
     Font um Bruchteile bis wenige Pixel anders (siehe Zustände unten).
-  - **Fest** (`w-[…]`, `h-[…]`, `size-[…]`): hartes Soll.
-  - **Füllend** (`flex-[1_0_0]`, `w-full`, `h-full`, `size-full`): die
-    Metadaten-Größe ist die, die der Knoten im Figma-Kontext gerade hatte —
-    ebenfalls kein hartes Soll, siehe Fallstricke. `size-full` zählt **nur
-    hier**, nicht an der gezogenen Wurzel.
+  - **Fest** (`w-[…]`, `h-[…]`, `size-[…]` auf dieser Achse): hartes Soll.
+  - **Füllend** (`flex-[1_0_0]`, `w-full`, `h-full`, `size-full` **in der
+    Kind-Ansicht**; an der gezogenen Wurzel bedeuten dieselben Klassen nichts):
+    die Metadaten-Größe ist die, die der Knoten im Figma-Kontext gerade hatte —
+    kein hartes Soll. Deckt sie sich, schreib
+    `stimmt (füllend — Größe aus dem Figma-Kontext, keine feste Vorgabe)`;
+    weicht sie ab, schreib `Kontextgröße (Δ …, füllender Knoten)`. Beides löst
+    keine Arbeit aus: wie breit der Knoten hier sein soll, entscheidet sein
+    Platz im Projekt, nicht der Ausschnitt, aus dem Figma ihn gemessen hat.
 
 **Nie raten.** Was du nicht wörtlich lesen kannst, wird zur Lücke mit Grund.
 Der Grund benennt, was du *nicht lesen konntest* — nie eine Design-Tatsache,
@@ -158,6 +169,12 @@ const kennung = n => n && (n.tagName.toLowerCase() +
 Der Block kommt ohne Top-Level-`await` aus; kann dein Werkzeug es, warte vor der
 Messung zusätzlich auf `document.fonts.ready`.
 
+**Vor jeder Neu-Messung den Cache umgehen.** Ein schlichter Reload liefert dir
+sonst die alte CSS, und die Tabelle bleibt unverändert, obwohl du längst
+behoben hast — oder sie bleibt sauber, obwohl du gerade etwas zerschossen hast.
+Häng einen Cache-Buster an die URL (`?v=<zeitstempel>`) oder erzwing einen
+Hard-Reload; verlass dich nicht darauf, dass der Dev-Server das erledigt.
+
 Für den Gap gilt: bei `display: flex` zählt die Achse der `flexDirection`
 (`row…` → `columnGap`, sonst `rowGap`), bei `display: grid` beide.
 
@@ -198,7 +215,7 @@ Textknoten) werden nicht einzeln aufgemacht.
 
 ## 4. Tabelle
 
-Genau diese Form, genau diese fünf Zustände:
+Genau diese Form, genau diese sechs Zustände:
 
 ```
 | Eigenschaft | Soll | Ist | Zustand |
@@ -217,6 +234,7 @@ Schriftschnitt, Zeilenhöhe, Laufweite, Textfarbe.
 | `Soll unbelegt (<Grund>)` | der Design-Kontext gibt dazu nichts her |
 | `nicht messbar (<Grund>)` | die Seite gibt den Wert nicht her |
 | `Richtwert (Δ …, Hug-Knoten)` | nur Breite/Höhe bei Hug — siehe Toleranzen |
+| `Kontextgröße (Δ …, füllender Knoten)` | nur Breite/Höhe bei füllend; deckt es sich, `stimmt (füllend — …)` |
 
 Toleranzen:
 
@@ -279,7 +297,10 @@ tragbar ist, entscheidest du und berichtest es.
   Höhe 40 = 12 + 16 + 12: der Strich liegt im Kasten. Ein CSS-`border` legt sich
   obendrauf und macht 42 daraus. Ohne Regel terminiert der Loop hier nie oder nur
   durch stilles Verbiegen (Padding auf 11px drücken — verschiebt den Text, sieht
-  keine Zeile). Zwei Techniken sind legitim, such dir eine aus:
+  keine Zeile). Zwei Techniken sind legitim, such dir eine aus — **ein
+  schlichtes `border` ohne eine davon verfehlt die Kastenmaße um 2 × Rahmen**,
+  und an einem Hug-Knoten kann die Richtwert-Nachsicht genau das schlucken. Wer
+  pur baut, tut es also wissentlich:
   - **Technik A, nur bei fester Größe:** `border` behalten **und** die Größe
     explizit setzen (`height`/`width` aus den Metadaten) **mit**
     `box-sizing: border-box`. Alle Rahmenzeilen messen sich normal;
@@ -301,12 +322,9 @@ tragbar ist, entscheidest du und berichtest es.
   unabhängig von der Reihenfolge der Klassen.
 - **`gap-x` und `gap-y` verschieden:** dann hängt der geltende Wert von der
   Layout-Richtung ab, die der Kontext nicht nennt → Lücke, nicht raten.
-- **Füllender Knoten** — erkannt **nur in der Kind-Ansicht** (`w-full`,
-  `h-full`, `size-full`, `flex-[1_0_0]`); dieselben Klassen an der gezogenen
-  Wurzel sind Boilerplate und bedeuten nichts, siehe Schritt 2. Die Größe aus
-  `get_metadata` ist die, die er im Figma-Kontext gerade hatte, keine feste
-  Vorgabe. Nimm sie, aber sag dazu, dass eine Abweichung hier zu prüfen und
-  nicht automatisch ein Befund ist.
+- **Füllender Knoten:** erkannt **nur in der Kind-Ansicht** — dieselben Klassen
+  an der gezogenen Wurzel sind Boilerplate und bedeuten nichts. Einstufung und
+  Zustand (`stimmt (füllend — …)` bzw. `Kontextgröße (Δ …)`) stehen in Schritt 2.
 - **Zeilenhöhe einheitenlos:** in einer Klasse (`leading-[1.4]`, `leading-none`)
   und im `Font(…)`-Block ist die nackte Zahl ein **Faktor** × Schriftgröße —
   so schreibt CSS es auch. Nur ein *Token*, der zu einer nackten Zahl auflöst
