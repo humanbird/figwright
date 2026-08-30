@@ -18,6 +18,11 @@ This skill measures **and** works off what it finds: deviating rows get fixed
 and re-measured. It is not a read-only audit. If the user wanted the numbers
 only, say so before touching a file.
 
+The table **replaces** the visual-parity checklist that closes the Figma
+implementation workflow; it does not run beside it. A checklist asks whether the
+padding looks right and gets a judgement back. This asks what the padding is and
+gets a number.
+
 ## 0. Inputs
 
 Three, all required: the node-accurate Figma link, a URL where the component
@@ -190,3 +195,6 @@ variant sweeps (one viewport, one variant — a clean table at 1440 says nothing
 about the other breakpoints), nested instances beyond the one child level in
 step 3, and the text content itself (wording, line breaks, truncation — the
 typography is measured, what it says is not).
+
+Screenshot comparison is a non-goal, not a gap: it answers with a judgement,
+and this skill exists to answer with a number.
