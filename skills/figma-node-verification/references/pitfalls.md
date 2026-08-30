@@ -35,9 +35,9 @@ after a surprise.
 - **CRITICAL — an inset border shadow is not also a design shadow.** When
   `inset 0 0 0 Npx <color>` is used as the border technique, extract its width,
   style and color into the Border rows as described above, then remove that
-  entry from the measured Shadow list **before** comparing shadows. Leaving it
-  in produces a false second finding for the same visible stroke. Other shadow
-  entries remain in their original order.
+  `boxShadow`-channel entry from the common measured Shadow list **before**
+  comparing shadows. Leaving it in produces a false second finding for the same
+  visible stroke. Other shadow entries remain in their original order.
 - **Padding by specificity:** `pt-` beats `py-`, `py-` beats `p-` — regardless
   of the order the classes appear in.
 - **`gap-x` and `gap-y` differ:** then the effective value depends on the layout
@@ -66,23 +66,38 @@ after a surprise.
 
 ## Producing interaction states
 
+- **A missing state header makes a default-state report look valid.** A linked
+  node can say `State=Hover` while the browser quietly renders the default; all
+  its numbers, screenshot, and ledger can still look internally consistent and
+  produce a plausible but false report. Whenever a state appears in the linked
+  node name or properties, the table header must contain `state: …`. If it does
+  not, the entire run is void: deliver no table, report the omission, and
+  restart with the state forced and named.
 - **JavaScript-owned data attributes need the project's own mechanism.**
   Patterns such as React Aria set attributes like `data-hovered`,
   `data-focus-visible`, and `data-disabled` from JavaScript state. Adding a
   native attribute or forcing a CSS pseudo-class does not make those attributes
   appear. Use the project's component props, story controls, event path, or
-  established class/attribute mechanism; if none can produce the linked state,
-  report `not measurable (state not producible)` rather than measuring the
-  default state.
+  established class/attribute trigger. Triggering that normal mechanism is
+  allowed; inventing extra CSS declarations just for verification is not.
+- **State failure is not a blanket escape hatch.** If the linked state cannot be
+  produced, compare the linked and default design contexts first. Only a row
+  whose property actually changes with the state may say `not measurable
+  (state not producible)`; an unchanged property is normally measurable in the
+  default render. A plausible table with, for example, 18 individually waived
+  rows hides that the run never established which values were state-dependent.
+  If state production or state dependency cannot be determined reliably, void
+  the entire run, give the concrete reason, deliver no table, and restart.
 
 ## Reading the measured values
 
 - `gap` reports `normal` when nothing is set; inside a flex or grid container
   that behaves like `0px` — so it is measurable, **not** "not measurable". If
   the element is neither flex nor grid, the gap is not measurable.
-- `boxShadow: none` is a measured absence, not a failure to measure. When the
-  target has a shadow, show `none` as the actual and compare it; when the target
-  has none, the Shadow rows still follow the target rules in the skill.
+- `boxShadow: none` and a filter with no `drop-shadow(…)` are measured
+  absences, not failures to measure. When the target has a shadow and neither
+  channel has a shadow entry, show `none` as the actual and compare it; when the
+  target has none, the Shadow rows still follow the target rules in the skill.
 - `letter-spacing` reports `normal` even when `0` is set **explicitly** — Chrome
   normalises it. "normal" means `0px` here and says nothing about whether the
   value was set.
@@ -97,17 +112,31 @@ after a surprise.
   measurable, with both numbers in the reason.
 - Four differing radii or border edges get their own rows each.
 - `boxShadow` is a comma-separated list, but commas inside `rgb(…)`/`rgba(…)`
-  do not split shadows. Use the `boxShadows` list returned by `measure.js`, and
-  apply the inset-border removal above before comparing it.
+  do not split shadows. A computed `filter` may contain several
+  `drop-shadow(…)` functions among other filters. Use the single `shadows` list
+  returned by `measure.js`; each entry identifies `channel: 'boxShadow'` or
+  `channel: 'filter'`. Apply the inset-border removal above before comparing.
+- CSS filter drop-shadows have no spread component. Normalise that actual spread
+  to `0px`; it is measurable, not missing. A nonzero target spread will then
+  correctly produce `deviates` on the spread row.
+- The measured channel is evidence, not a target property. Compare the shadow's
+  offset, blur, spread, and color channel-agnostically, and note its actual
+  channel in the table. A value emitted by `drop-shadow-[…]` may legitimately
+  appear in computed `boxShadow`, and a fallback `shadow-[…]` value may appear
+  in computed `filter`; neither channel choice is a `deviates` reason.
 - Font family: only the **first** entry of the stack is compared.
 
 ## Comparing — where a wrong comparison still looks right
 
 Compare values, not strings. `#fff` against `rgb(255 255 255)` is a false
-`deviates`; rounding before comparing is a false `matches`.
+`deviates`; unprescribed rounding before comparing is a false `matches`.
 
-- **Colors:** normalise both sides to integer RGB channels plus alpha before
-  comparing. Show the actual in the form the page reported it.
+- **Colors:** normalise both sides to integer RGB channels plus alpha. Round
+  both target and actual alpha to 1/255 precision, then treat them as equal when
+  their difference is ≤ 1/255. Chrome can serialise 26/255 as
+  `rgba(…, 0.1)`; a value that is byte-identical to the target must never read
+  `deviates` merely because of that rounding/serialisation artefact. RGB
+  channels remain exact. Show the actual in the form the page reported it.
 - **Lengths:** strip the unit, compare as numbers against the tolerance. Round
   to two decimals for display only, never before comparing.
 - **Font family:** first stack entry, quotes stripped, case-insensitive.
@@ -122,7 +151,8 @@ Compare values, not strings. `#fff` against `rgb(255 255 255)` is a false
 - **Padding, gap, radius, border width: 0** — those sit exactly in the CSS. The
   border width has the most at stake: its value space is 0/1/2px, so any
   leniency waves through a border 50% too thick.
-- **Colors: 0**, alpha channel included.
+- **Colors:** RGB channels 0; alpha difference ≤ 1/255 after both sides are
+  rounded to 1/255 precision.
 - **Hug node, width and height: reference.** When the node sizes to its content
   the target comes from Figma's own text measurement, so a few pixels of
   difference are font rendering, not a build error. State

@@ -13,22 +13,38 @@ outcome worth avoiding here.
 `border-[length:…]`/`border-[color:…]`/`border-solid`, `text-[color:…]`,
 `text-[length:…]`, `font-[family-name:…]`, `font-[…]`,
 `leading-[…]`/`leading-none`, `tracking-[…]`, and arbitrary-value or
-variable-backed `shadow-…` classes.
+variable-backed `drop-shadow-[…]` classes; `shadow-[…]` is the supported
+fallback form.
 
 ## Shadows
 
-Read a shadow target only when the design context supplies its value literally:
-an arbitrary-value `shadow-[…]` class, including `shadow-[var(--…)]`, or a
-`shadow-…` variable whose value is available from `get_variable_defs`. Resolve
-`var(…)` as below, turn underscores in an arbitrary value back into spaces, and
-record offset-x, offset-y, blur, spread, and color separately. An omitted
-spread is `0px`. Preserve multiple shadows in their declared order and repeat
-the five rows as Shadow 1, Shadow 2, and so on.
+The primary source class for a design shadow is `drop-shadow-[…]`: that is the
+form the Figma-to-code generator emits. Read it first, including
+`drop-shadow-[var(--…)]`. Keep `shadow-[…]`, including
+`shadow-[var(--…)]`, as a secondary fallback when there is no readable
+`drop-shadow-[…]` target; it is not obsolete. These class names identify the
+design value, not the CSS channel in which the implementation must render it.
+
+Read a shadow target only when the design context supplies its value literally
+in one of those arbitrary-value classes, or via a variable named by that class
+whose value is available from `get_variable_defs`. Resolve `var(…)` as below,
+turn underscores in an arbitrary value back into spaces, and record offset-x,
+offset-y, blur, spread, and color separately. An omitted spread is `0px`.
+Preserve multiple shadows in their declared order and repeat the five rows as
+Shadow 1, Shadow 2, and so on. **“Declared order” means the left-to-right order
+in the class string on the root of the measured element/node.**
+
+The class-resolved value always wins if the class string and a separately
+supplied value in `get_variable_defs` contradict each other: the class is what
+the generator actually means as CSS. Do not average, guess, or silently choose.
+Use the class-resolved value as the target, then name the discrepancy in its own
+remark under the table. `get_variable_defs` still resolves a token referenced
+by the class; this tie-break applies when it also offers a competing target.
 
 A named shadow class without a readable value is not permission to import a
 framework default. It yields `no target` with the class named in the reason.
-When there is no `shadow-…` class at all, the five Shadow rows read
-`no target (no shadow-… class in the design context)`.
+When there is neither a `drop-shadow-[…]` nor a `shadow-[…]` class, the five
+Shadow rows read `no target (no shadow class in the design context)`.
 
 ## Resolving `var(--token, fallback)`
 

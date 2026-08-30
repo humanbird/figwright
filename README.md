@@ -38,8 +38,9 @@ project's tokens, delivers the URL it renders under, and then runs
 `/figwright:figma-node-verification <figma link with node-id>` runs on its own,
 against a component that already exists, no matter who built it. It needs the
 Figma node, a URL where the component renders, and a selector that hits it.
-When the linked node is an interaction-state variant, that state is forced in
-the browser and named in the table header.
+When the linked node is an interaction-state variant, that state is produced in
+the browser and named in the table header. A state variant without that header
+line voids the run rather than yielding a plausible default-state table.
 
 It measures **and** fixes: rows that deviate get corrected and re-measured,
 up to three rounds. It is not a read-only audit — if you want the numbers
@@ -66,7 +67,8 @@ without the edits, say so when you start it.
 | **context size (Δ …, fill node)** | Width/height of a filling node come from Figma's frame, not from a fixed target. Shown, triggers no work. |
 
 Tolerances: typography 0.1px; width/height 0.5px (device-pixel rounding);
-padding, gap, radius and border width 0; colors 0, alpha channel included.
+padding, gap, radius and border width 0; RGB channels 0; alpha ≤ 1/255 after
+both sides are rounded to 1/255 precision.
 
 No PASS, no FAIL. The table is the finding, and the run ends with a ledger of
 every row that is not `matches` — so a table full of `not measurable` cannot be
@@ -76,7 +78,9 @@ After the table, every run records **Visual observations** from the design and
 rendered screenshots and an **Assets & text** note naming reused design sources
 and visible placeholders. Neither creates another table state or replaces the
 numeric ledger. Shadows are measured as offset-x, offset-y, blur, spread, and
-color; an inset shadow used as a border is counted only in the border rows.
+color from computed `boxShadow` and `filter: drop-shadow(…)`; their actual
+channel is noted but compared channel-agnostically. An inset shadow used as a
+border is counted only in the border rows.
 
 ## Limits
 

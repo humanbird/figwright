@@ -28,6 +28,40 @@ const splitCssList = value => {
   parts.push(value.slice(start).trim());
   return parts;
 };
+// A computed filter is space-separated and may mix drop-shadow() with other
+// functions. Extract complete drop-shadow() calls without being confused by
+// nested color functions.
+const extractCssFunctions = (value, name) => {
+  const needle = `${name}(`;
+  const parts = [];
+  let searchFrom = 0;
+  while (searchFrom < value.length) {
+    const start = value.indexOf(needle, searchFrom);
+    if (start === -1) break;
+    let depth = 0, end = start;
+    for (; end < value.length; end++) {
+      if (value[end] === '(') depth++;
+      if (value[end] === ')' && --depth === 0) {
+        parts.push(value.slice(start, end + 1));
+        end++;
+        break;
+      }
+    }
+    if (depth !== 0) break;
+    searchFrom = end;
+  }
+  return parts;
+};
+// One channel-labelled list is the source for shadow comparison. Channel order
+// is stable: computed boxShadow entries first, then filter drop-shadow entries.
+const shadows = !c ? [] : [
+  ...(c.boxShadow === 'none' ? [] : splitCssList(c.boxShadow)).map(value => ({
+    channel: 'boxShadow', value,
+  })),
+  ...(c.filter === 'none' ? [] : extractCssFunctions(c.filter, 'drop-shadow')).map(value => ({
+    channel: 'filter', value,
+  })),
+];
 !el ? { error: `selector matches 0 elements: ${sel}` } : ({
   hits: hits.length, element: id(el),
   textCarrier: id(tEl), textCarriers: carriers.length,
@@ -47,7 +81,8 @@ const splitCssList = value => {
                  c.borderBottomColor, c.borderLeftColor],
   background: c.backgroundColor,
   boxShadow: c.boxShadow,
-  boxShadows: c.boxShadow === 'none' ? [] : splitCssList(c.boxShadow),
+  filter: c.filter,
+  shadows,
   font: t && [t.fontFamily, t.fontSize, t.fontWeight, t.lineHeight,
               t.letterSpacing, t.color],
   // Is the design's face really loaded? Query style and weight too — the

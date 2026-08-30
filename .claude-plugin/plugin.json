@@ -1,6 +1,6 @@
 {
   "name": "figwright",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Two skills that measure a built component against its Figma node in a real browser, property by property — no code of its own, no tokens, no setup.",
   "author": {
     "name": "Uwe Heinrichs"

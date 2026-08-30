@@ -56,24 +56,37 @@ translation. If the root still carries no `data-node-id`, the node from
 
 ### Produce the linked interaction state
 
-When the linked node is a component variant whose variant property names an
-interaction state (`State=Hover`, `State=Focus`, `State=Disabled`, and so on),
-measure that state rather than the component's default state. Produce it before
-the first measurement and again after every reload:
+When the linked node or variant names an interaction state in either its node
+name or its properties (`State=Hover`, `State=Focus`, `State=Disabled`, and so
+on), measure that state rather than the component's default state. Produce it
+before the first measurement and again after every reload:
 
-1. For a pseudo-class-driven state, use CDP `CSS.forcePseudoState` when the
-   browser tool exposes it.
-2. Otherwise use the project's existing prop, story control, event path, or
-   class/attribute mechanism. Do not add a verification-only implementation of
-   the state merely to make it measurable.
+1. **Route 1, if available:** for a pseudo-class-driven state, use CDP
+   `CSS.forcePseudoState` when the browser tool exposes it.
+2. **Route 2:** use the project's existing prop, story control, event path, or
+   class/attribute mechanism. A pure trigger operation — for example, setting
+   the class or attribute through which the project normally activates the
+   state — is allowed and is not a forbidden verification-only style. What is
+   forbidden is hand-authoring additional measurement styles that are not part
+   of the project's normal state mechanism.
 
 Keep the state in force for the measurement and the rendered screenshot. Add
 the method to the table header exactly in this form: `state: hover (forced via
 CDP CSS.forcePseudoState)` or `state: disabled (forced via project story
-control)`. If the linked state cannot be produced, do not compare its target to
-the default render: target-bearing rows read `not measurable (state not
-producible)` and target-less rows retain `no target (<reason>)`. Count every
-such row in the closing ledger.
+control)`. This `state: …` header line is mandatory whenever the linked node or
+variant names a state. If it is absent, the entire run is void: deliver no
+table, report the missing state header, and restart the run.
+
+If the linked state cannot be produced, compare its design context with the
+default context first. Only rows whose properties actually change with the
+state may read `not measurable (state not producible)`; properties that do not
+react to the state remain normally measurable, and target-less rows retain `no
+target (<reason>)`. Name the requested state in the header as not producible,
+for example `state: hover (not producible)`, and count the affected rows in the
+closing ledger. If it is not possible to determine reliably whether the state
+was produced or which properties are state-dependent, the entire run is void:
+deliver no table, give the concrete reason, and restart. Marking all rows `not
+measurable` is never a substitute.
 
 ## 2. Derive the target
 
@@ -81,6 +94,12 @@ such row in the closing ledger.
 covers which class carries which value, how tokens and font styles resolve, and
 how a node's per-axis sizing mode decides whether its size is a hard target or a
 reference.
+
+For any contradiction between a target resolved from the root class string and
+a separately supplied target in `get_variable_defs`, the class-resolved value
+is authoritative because it is the generator's intended CSS. Never average or
+guess. Use that value in the table and add a separate source-discrepancy remark
+directly under the table; the remark is not a row or a seventh State.
 
 ## 3. Measure the actual, in a real browser
 
@@ -119,9 +138,10 @@ neon green ground yields a table indistinguishable from the correct one.
 
 So **when the design context carries children with their own `data-node-id` and
 their own box properties (`border…`, `bg-…`, `rounded-…`, `p…-`, `gap-…`,
-`gap-x-…`, `gap-y-…`, `shadow-…`), run the same measurement for each** — own
-selector, own table block; the root header notes "N children measured, see
-below". The gap and shadow classes belong in that list because a pure layout or
+`gap-x-…`, `gap-y-…`, `drop-shadow-[…]`, or the fallback `shadow-[…]`), run
+the same measurement for each** — own selector, own table block; the root
+header notes "N children measured, see below". The gap and shadow classes
+belong in that list because a pure layout or
 surface container often carries nothing else: leave them out and the property
 is never measured, and the run reports `deviates 0` for a row it never looked
 at. A child with no findable counterpart reads `not measurable (no counterpart
@@ -130,8 +150,11 @@ properties (icons, plain text nodes) stay closed.
 
 More than one text carrier means more than one text style. The root block
 already covers carrier 1 — do not open a second block for it; carriers 2..n get
-one block each, and any you skip get named. That keeps the block count the same
-across runs.
+one block each, and any you skip get named. In every text-carrier block from
+block 2 through block n, **ONLY the six typography rows are measured — font
+family, font size, font weight, line height, letter spacing, and text color — no
+more and no fewer.** That keeps the ledger and block count comparable across
+runs.
 
 When one DOM element stands in for two Figma nodes — a wrapper and the carrier
 inside it collapsed into a single rendered element — measure the size rows
@@ -154,11 +177,19 @@ bottom, padding left (**four rows of their own**, not one — Figma sets them
 individually), gap, corner radius, border width, border style, border color,
 background color, Shadow offset-x, Shadow offset-y, Shadow blur, Shadow spread,
 Shadow color, font family, font size, font weight, line height, letter spacing,
-text color. Shadow targets come from the readable `shadow-…` classes and
-variables described in the design-context reference; without one, all five
-rows read `no target (no shadow-… class in the design context)`. Actual values
-come from computed `boxShadow` via the script's `boxShadows` list. Apply numeric
-and color normalisation, but invent no shadow tolerance.
+text color. Shadow targets come from the readable shadow classes and variables
+described in the design-context reference: `drop-shadow-[…]` is the primary
+generator form, while `shadow-[…]` remains the secondary fallback.
+Without either one, all five rows read `no target (no shadow class in the design
+context)`. Actual values come from both computed `boxShadow` and computed
+`filter: drop-shadow(…)` through the script's single `shadows` list; every entry
+names its `boxShadow` or `filter` channel. A filter drop-shadow has no spread
+slot, so normalise its actual spread to `0px` rather than treating it as absent.
+
+Compare shadow values channel-agnostically. A design shadow may legitimately
+render through either channel: put the actual channel in the table row as a
+note, but **never** use the channel difference as a reason for `deviates`.
+Apply numeric and color normalisation, but invent no shadow tolerance.
 
 A row splits when the property does: four differing corner radii or border
 edges become four named rows each, a grid container gets a column gap row and a
@@ -184,11 +215,12 @@ The header says what you measured: node id, URL, selector and its hit count,
 chosen element, text carrier and how many carriers exist, viewport and
 `devicePixelRatio` (the 0.5px tolerance hangs off it), and how many children
 you measured on top. For a linked interaction variant it also carries `state:
-… (forced via …)` as specified above. If your browser tool reports `0 × 0`,
-write "viewport not reported" — not the 0. Rows whose value you set yourself
-out of the metadata via technique A carry the note `set by technique A`: their
-target and their actual come from the same number, so without the note the row
-reads as independent confirmation when it is none.
+…` in the forced or not-producible form specified above; the report is void if
+a state named by the node or its properties lacks that line. If your browser
+tool reports `0 × 0`, write "viewport not reported" — not the 0. Rows whose
+value you set yourself out of the metadata via technique A carry the note `set
+by technique A`: their target and their actual come from the same number, so
+without the note the row reads as independent confirmation when it is none.
 
 ## 5. After the table: screenshot, assets and text
 
@@ -197,6 +229,11 @@ supplementary visual step is mandatory: pull `get_screenshot` for the exact
 linked node, capture the rendered component at the measured viewport and in the
 same forced state, and hold the two against each other. This is an observation
 pass, not a second verdict and not a source of table values.
+
+For visual judgement, page zoom may be increased (page zoom, never image
+scaling), but the forced state must then be verified again because zoom may
+have reset it; a capture that remains technically unjudgeable is reported
+explicitly as `screenshot not judgeable`, never silently skipped or omitted.
 
 Directly under the table, add a **Visual observations** list. Name visible
 facts which no row explains — for example `Search icon shown instead of the
@@ -228,6 +265,11 @@ simply does not name the property, and then **the gap is the result** —
 reported, not closed. Catching up only pays when the reason points at a missing
 *answer* (e.g. "no metadata delivered"). **`not measurable`** usually means the
 wrong element — sharpen the selector.
+
+`not measurable (state not producible)` is restricted to rows that are proven
+state-dependent by comparison with the default design context. If the run
+cannot reliably establish the state or that dependency, void the whole run
+with a clear reason instead of waving every row through as `not measurable`.
 
 Close with the ledger, so an unmeasurable run cannot pass for a clean one:
 
