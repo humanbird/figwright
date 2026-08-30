@@ -3,8 +3,9 @@
 Two skills that measure a built component in a real browser against its Figma
 node, property by property.
 
-Figma MCP and a screenshot loop get you to "looks about right". figwright tells
-you `font-size` is 15 where the design says 16 — row by row, with numbers.
+figwright tells you `font-size` is 15 where the design says 16 — row by row,
+with numbers — then uses the design and rendered screenshots to record visible
+facts the rows do not explain.
 
 No code, no dependencies, no API tokens, no configuration. The whole tool is
 Markdown plus one browser snippet: the agent pulls the target through its Figma
@@ -37,6 +38,8 @@ project's tokens, delivers the URL it renders under, and then runs
 `/figwright:figma-node-verification <figma link with node-id>` runs on its own,
 against a component that already exists, no matter who built it. It needs the
 Figma node, a URL where the component renders, and a selector that hits it.
+When the linked node is an interaction-state variant, that state is forced in
+the browser and named in the table header.
 
 It measures **and** fixes: rows that deviate get corrected and re-measured,
 up to three rounds. It is not a read-only audit — if you want the numbers
@@ -69,19 +72,30 @@ No PASS, no FAIL. The table is the finding, and the run ends with a ledger of
 every row that is not `matches` — so a table full of `not measurable` cannot be
 mistaken for a clean component.
 
+After the table, every run records **Visual observations** from the design and
+rendered screenshots and an **Assets & text** note naming reused design sources
+and visible placeholders. Neither creates another table state or replaces the
+numeric ledger. Shadows are measured as offset-x, offset-y, blur, spread, and
+color; an inset shadow used as a border is counted only in the border rows.
+
 ## Limits
 
 What this version does not measure. Deliberate boundaries, not a promise:
 
-- **Effects** — shadows, blur, opacity, blend modes.
-- **Images and vector content** — source, crop, `object-fit`, path, `viewBox`.
-- **Interaction states** — hover, focus, active, disabled. One render state per
-  run.
+- **Effects other than shadows** — blur, opacity, blend modes.
+- **Image and vector properties** — crop, `object-fit`, path, `viewBox`. Sources
+  and placeholders are still recorded below the table.
 - **Responsive and variant sweeps** — one viewport, one variant per run.
 - **Nested instances** beyond the one child level the verification skill opens
   up.
-- **Text content itself** — wording, line breaks, truncation. The typography is
-  measured, what it says is not.
+- **Text-content correctness** — wording, line breaks, truncation. Used text and
+  placeholders are recorded, and typography is measured.
+
+## Backlog
+
+- **Motion and transition behavior** — deliberately later, not never. Motion is
+  frozen during current measurements so intermediate frames cannot distort the
+  numbers.
 
 ## Versioning
 

@@ -55,6 +55,14 @@ raw target is a measuring decision — the two do not conflict.
   returned by the MCP for an image or SVG is used directly — it is served by the
   MCP's own assets endpoint. Do not pull in an icon package, do not substitute a
   placeholder where a source was provided, and do not redraw an asset by hand.
+  If the MCP delivers no source for an asset, a placeholder is allowed, but it
+  must be visibly identifiable as one and carry explicit alternative text such
+  as `Placeholder: Figma asset source unavailable`. Never let it resemble a
+  silently accepted design asset.
+- **Missing text may be represented, not invented.** When the MCP delivers no
+  text content, use visibly marked placeholder copy and identify it as a
+  placeholder in accessible text. When it does deliver the content, use that
+  content directly.
 - **Project conventions belong in the project.** If this repo has no design
   system rules yet, the `figma-create-design-system-rules` skill writes them
   into `CLAUDE.md`/`AGENTS.md` once, instead of being re-explained per run.
@@ -92,5 +100,6 @@ table in full at the end; from the intermediate rounds, what changed is enough.
 ## 6. Report
 
 Changed files, which project tokens map onto which Figma tokens, the render
-site (URL and how to start it), and what stayed open in the target/actual
-table, including verification's closing ledger.
+site (URL and how to start it), which MCP-provided assets and text were used and
+where placeholders remain, and what stayed open in the target/actual table,
+including verification's closing ledger.

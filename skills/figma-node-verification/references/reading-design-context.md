@@ -12,7 +12,23 @@ outcome worth avoiding here.
 `rounded-[…]`, `w-/h-/size-[…]`, `bg-[…]`, `border`/`border-[…]`/
 `border-[length:…]`/`border-[color:…]`/`border-solid`, `text-[color:…]`,
 `text-[length:…]`, `font-[family-name:…]`, `font-[…]`,
-`leading-[…]`/`leading-none`, `tracking-[…]`.
+`leading-[…]`/`leading-none`, `tracking-[…]`, and arbitrary-value or
+variable-backed `shadow-…` classes.
+
+## Shadows
+
+Read a shadow target only when the design context supplies its value literally:
+an arbitrary-value `shadow-[…]` class, including `shadow-[var(--…)]`, or a
+`shadow-…` variable whose value is available from `get_variable_defs`. Resolve
+`var(…)` as below, turn underscores in an arbitrary value back into spaces, and
+record offset-x, offset-y, blur, spread, and color separately. An omitted
+spread is `0px`. Preserve multiple shadows in their declared order and repeat
+the five rows as Shadow 1, Shadow 2, and so on.
+
+A named shadow class without a readable value is not permission to import a
+framework default. It yields `no target` with the class named in the reason.
+When there is no `shadow-…` class at all, the five Shadow rows read
+`no target (no shadow-… class in the design context)`.
 
 ## Resolving `var(--token, fallback)`
 

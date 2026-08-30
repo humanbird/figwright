@@ -1,6 +1,6 @@
 ---
 name: figma-node-verification
-description: "Measures a built component in a real browser against its Figma node, property by property, and works off the deviations. Use when the user wants an implementation verified, checked or measured against a Figma design, mentions target/actual comparison, pixel drift, or asks whether something matches the design, or supplies a Figma node link for a component that already exists. Not for producing the initial implementation — figma-node-implementation covers that — and not for screenshot diffing."
+description: "Measures a built component in a real browser against its Figma node, property by property, and works off the deviations. Use when the user wants an implementation verified, checked or measured against a Figma design, mentions target/actual comparison, pixel drift, or asks whether something matches the design, or supplies a Figma node link for a component that already exists. Not for producing the initial implementation — figma-node-implementation covers that — and not for screenshot-only comparison."
 user-invocable: true
 argument-hint: "<figma link with node-id>"
 ---
@@ -22,6 +22,9 @@ The table **replaces** the visual-parity checklist that closes the Figma
 implementation workflow; it does not run beside it. A checklist asks whether the
 padding looks right and gets a judgement back. This asks what the padding is and
 gets a number.
+
+The required screenshot step later does not restore that checklist: it records
+named visual facts without scoring them, while the table remains authoritative.
 
 ## 0. Inputs
 
@@ -50,6 +53,27 @@ for that switch only on explicit user request — invoking this skill is that
 request: it measures against the raw design target, not the project's own
 translation. If the root still carries no `data-node-id`, the node from
 `get_metadata` is the reference — header too.
+
+### Produce the linked interaction state
+
+When the linked node is a component variant whose variant property names an
+interaction state (`State=Hover`, `State=Focus`, `State=Disabled`, and so on),
+measure that state rather than the component's default state. Produce it before
+the first measurement and again after every reload:
+
+1. For a pseudo-class-driven state, use CDP `CSS.forcePseudoState` when the
+   browser tool exposes it.
+2. Otherwise use the project's existing prop, story control, event path, or
+   class/attribute mechanism. Do not add a verification-only implementation of
+   the state merely to make it measurable.
+
+Keep the state in force for the measurement and the rendered screenshot. Add
+the method to the table header exactly in this form: `state: hover (forced via
+CDP CSS.forcePseudoState)` or `state: disabled (forced via project story
+control)`. If the linked state cannot be produced, do not compare its target to
+the default render: target-bearing rows read `not measurable (state not
+producible)` and target-less rows retain `no target (<reason>)`. Count every
+such row in the closing ledger.
 
 ## 2. Derive the target
 
@@ -95,14 +119,14 @@ neon green ground yields a table indistinguishable from the correct one.
 
 So **when the design context carries children with their own `data-node-id` and
 their own box properties (`border…`, `bg-…`, `rounded-…`, `p…-`, `gap-…`,
-`gap-x-…`, `gap-y-…`), run the same measurement for each** — own selector, own
-table block; the root header notes "N children measured, see below". The gap
-classes belong in that list because a pure layout container often carries
-nothing else: leave them out and its gap is never measured, and the run reports
-`deviates 0` for a row it never looked at. A child with no findable counterpart
-reads `not measurable (no counterpart in the DOM)` rather than quietly
-disappearing. Leaf nodes without any of those properties (icons, plain text
-nodes) stay closed.
+`gap-x-…`, `gap-y-…`, `shadow-…`), run the same measurement for each** — own
+selector, own table block; the root header notes "N children measured, see
+below". The gap and shadow classes belong in that list because a pure layout or
+surface container often carries nothing else: leave them out and the property
+is never measured, and the run reports `deviates 0` for a row it never looked
+at. A child with no findable counterpart reads `not measurable (no counterpart
+in the DOM)` rather than quietly disappearing. Leaf nodes without any of those
+properties (icons, plain text nodes) stay closed.
 
 More than one text carrier means more than one text style. The root block
 already covers carrier 1 — do not open a second block for it; carriers 2..n get
@@ -125,22 +149,30 @@ than reporting an unexplained context-size delta.
 | Font size | 16px | — | not measurable (no text node in the element) |
 ```
 
-18 rows in this order: width, height, padding top, padding right, padding
+23 base rows in this order: width, height, padding top, padding right, padding
 bottom, padding left (**four rows of their own**, not one — Figma sets them
 individually), gap, corner radius, border width, border style, border color,
-background color, font family, font size, font weight, line height, letter
-spacing, text color.
+background color, Shadow offset-x, Shadow offset-y, Shadow blur, Shadow spread,
+Shadow color, font family, font size, font weight, line height, letter spacing,
+text color. Shadow targets come from the readable `shadow-…` classes and
+variables described in the design-context reference; without one, all five
+rows read `no target (no shadow-… class in the design context)`. Actual values
+come from computed `boxShadow` via the script's `boxShadows` list. Apply numeric
+and color normalisation, but invent no shadow tolerance.
 
 A row splits when the property does: four differing corner radii or border
 edges become four named rows each, a grid container gets a column gap row and a
-row gap row. Splitting is expected; dropping or inventing a property is not.
+row gap row, and multiple shadows repeat the five rows as Shadow 1, Shadow 2,
+and so on. Before comparing, remove an inset border-technique shadow exactly as
+required by the pitfalls; it has already been accounted for in the Border rows.
+Splitting is expected; dropping or inventing a property is not.
 
 | State | when |
 | --- | --- |
 | `matches` | target and actual agree within tolerance |
 | `deviates` | both values present and different — actual carries `(Δ +2px)` |
 | `no target (<reason>)` | the design context yields nothing for it |
-| `not measurable (<reason>)` | the page yields no value |
+| `not measurable (<reason>)` | the page yields no value for the target property or state |
 | `reference (Δ …, hug node)` | width/height on a hug node only |
 | `context size (Δ …, fill node)` | width/height on a fill node only; if it agrees, `matches (fill — …)` |
 
@@ -151,13 +183,39 @@ under [Comparing](references/pitfalls.md#comparing--where-a-wrong-comparison-sti
 The header says what you measured: node id, URL, selector and its hit count,
 chosen element, text carrier and how many carriers exist, viewport and
 `devicePixelRatio` (the 0.5px tolerance hangs off it), and how many children
-you measured on top. If your browser tool reports `0 × 0`, write "viewport not
-reported" — not the 0. Rows whose value you set yourself out of the metadata
-via technique A carry the note `set by technique A`: their target and their
-actual come from the same number, so without the note the row reads as
-independent confirmation when it is none.
+you measured on top. For a linked interaction variant it also carries `state:
+… (forced via …)` as specified above. If your browser tool reports `0 × 0`,
+write "viewport not reported" — not the 0. Rows whose value you set yourself
+out of the metadata via technique A carry the note `set by technique A`: their
+target and their actual come from the same number, so without the note the row
+reads as independent confirmation when it is none.
 
-## 5. Working off
+## 5. After the table: screenshot, assets and text
+
+The table stays the primary finding. Once all of its blocks are complete, the
+supplementary visual step is mandatory: pull `get_screenshot` for the exact
+linked node, capture the rendered component at the measured viewport and in the
+same forced state, and hold the two against each other. This is an observation
+pass, not a second verdict and not a source of table values.
+
+Directly under the table, add a **Visual observations** list. Name visible
+facts which no row explains — for example `Search icon shown instead of the
+Figma node's filter icon`, `Second badge rendered below the card`, or `Footer
+overlaps the body`. Do not turn them into measurement rows, assign them a State,
+or write an overall visual judgement. If there are none, write `No visual
+observations beyond the table rows.` If either capture is unavailable, name the
+missing capture there rather than implying that the comparison happened.
+
+Then add an **Assets & text** note. List which design-provided sources and text
+were used and where visibly marked asset or text placeholders remain. When a
+category is absent or has no placeholders, say that explicitly. This is a
+source/placeholder observation, never a measurement row and never a seventh
+State.
+
+Repeat both notes after the final re-measurement so that they describe the same
+render as the final table.
+
+## 6. Working off
 
 Only **`deviates`** triggers work. Fix, then **re-measure** — do not carry the
 old table forward. Repeat until no row deviates, at most three rounds — **this
@@ -187,14 +245,15 @@ is tolerable is your call to state and the user's to make.
 ## Limits
 
 Outside this version by decision, not by oversight — name the one a run touches
-instead of letting a clean table imply it was covered: effects (shadow, blur,
-opacity, blend mode; `boxShadow` is read only as evidence for the inset border
-technique), image and vector content (source, crop, `object-fit`, path,
-`viewBox`), interaction states (one render state per run), responsive and
-variant sweeps (one viewport, one variant — a clean table at 1440 says nothing
-about the other breakpoints), nested instances beyond the one child level in
-step 3, and the text content itself (wording, line breaks, truncation — the
-typography is measured, what it says is not).
+instead of letting a clean table imply it was covered: effects other than
+shadows (blur, opacity, blend mode), image and vector properties (crop,
+`object-fit`, path, `viewBox`; their sources and placeholders are still named
+in **Assets & text**), responsive and variant sweeps (one viewport, one linked
+variant — a clean table at 1440 says nothing about the other breakpoints),
+nested instances beyond the one child level in step 3, and text-content
+correctness (wording, line breaks, truncation; delivered text and placeholders
+are still named in **Assets & text**, while typography is measured).
 
-Screenshot comparison is a non-goal, not a gap: it answers with a judgement,
-and this skill exists to answer with a number.
+Screenshot comparison is the required supplementary observation pass in step
+5. It can expose unexplained visible facts, but it supplies no measurements,
+creates no table rows or States, and never replaces the table or its ledger.

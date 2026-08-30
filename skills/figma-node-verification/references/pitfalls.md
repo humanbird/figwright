@@ -32,6 +32,12 @@ after a surprise.
 
   What you do **not** do: shrink padding against the design to rescue the
   height. That moves the text and the table cannot see it.
+- **CRITICAL — an inset border shadow is not also a design shadow.** When
+  `inset 0 0 0 Npx <color>` is used as the border technique, extract its width,
+  style and color into the Border rows as described above, then remove that
+  entry from the measured Shadow list **before** comparing shadows. Leaving it
+  in produces a false second finding for the same visible stroke. Other shadow
+  entries remain in their original order.
 - **Padding by specificity:** `pt-` beats `py-`, `py-` beats `p-` — regardless
   of the order the classes appear in.
 - **`gap-x` and `gap-y` differ:** then the effective value depends on the layout
@@ -58,11 +64,25 @@ after a surprise.
 - **Two `border-[…]` classes:** one is the width, one is the color. Assign them
   by resolved value, not by the order they appear in.
 
+## Producing interaction states
+
+- **JavaScript-owned data attributes need the project's own mechanism.**
+  Patterns such as React Aria set attributes like `data-hovered`,
+  `data-focus-visible`, and `data-disabled` from JavaScript state. Adding a
+  native attribute or forcing a CSS pseudo-class does not make those attributes
+  appear. Use the project's component props, story controls, event path, or
+  established class/attribute mechanism; if none can produce the linked state,
+  report `not measurable (state not producible)` rather than measuring the
+  default state.
+
 ## Reading the measured values
 
 - `gap` reports `normal` when nothing is set; inside a flex or grid container
   that behaves like `0px` — so it is measurable, **not** "not measurable". If
   the element is neither flex nor grid, the gap is not measurable.
+- `boxShadow: none` is a measured absence, not a failure to measure. When the
+  target has a shadow, show `none` as the actual and compare it; when the target
+  has none, the Shadow rows still follow the target rules in the skill.
 - `letter-spacing` reports `normal` even when `0` is set **explicitly** — Chrome
   normalises it. "normal" means `0px` here and says nothing about whether the
   value was set.
@@ -76,6 +96,9 @@ after a surprise.
   `transform`. The geometry is then not comparable with the other values → not
   measurable, with both numbers in the reason.
 - Four differing radii or border edges get their own rows each.
+- `boxShadow` is a comma-separated list, but commas inside `rgb(…)`/`rgba(…)`
+  do not split shadows. Use the `boxShadows` list returned by `measure.js`, and
+  apply the inset-border removal above before comparing it.
 - Font family: only the **first** entry of the stack is compared.
 
 ## Comparing — where a wrong comparison still looks right
