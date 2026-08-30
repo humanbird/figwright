@@ -32,7 +32,12 @@ turn underscores in an arbitrary value back into spaces, and record offset-x,
 offset-y, blur, spread, and color separately. An omitted spread is `0px`.
 Preserve multiple shadows in their declared order and repeat the five rows as
 Shadow 1, Shadow 2, and so on. **“Declared order” means the left-to-right order
-in the class string on the root of the measured element/node.**
+in the class string on the root of the measured element/node.** When targets
+and actuals span both channels (`boxShadow` and `filter`), do not pair by raw
+index — the measured list is grouped by channel. Pair each target with the
+closest-matching actual (offsets/blur/color), and only then compare; a pairing
+you cannot make confidently is a `not measurable (shadow pairing ambiguous)`
+row, never a guessed `deviates`.
 
 The class-resolved value always wins if the class string and a separately
 supplied value in `get_variable_defs` contradict each other: the class is what

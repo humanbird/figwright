@@ -132,8 +132,9 @@ Compare values, not strings. `#fff` against `rgb(255 255 255)` is a false
 `deviates`; unprescribed rounding before comparing is a false `matches`.
 
 - **Colors:** normalise both sides to integer RGB channels plus alpha. Round
-  both target and actual alpha to 1/255 precision, then treat them as equal when
-  their difference is ≤ 1/255. Chrome can serialise 26/255 as
+  both target and actual alpha to 1/255 precision and compare those integers
+  exactly — the rounding absorbs the serialisation artefact; do not grant any
+  further difference. Chrome can serialise 26/255 as
   `rgba(…, 0.1)`; a value that is byte-identical to the target must never read
   `deviates` merely because of that rounding/serialisation artefact. RGB
   channels remain exact. Show the actual in the form the page reported it.
