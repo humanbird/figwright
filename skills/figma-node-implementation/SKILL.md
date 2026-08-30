@@ -50,6 +50,9 @@ If the URL does not come up, stop here and say why. Do not keep guessing.
 
 Run the `figma-node-verification` skill on the same node right after
 (`/figwright:figma-node-verification $ARGUMENTS`) and work off the deviations.
+Hand over all three of its inputs — the node link, the URL from step 3, and a
+selector that hits the component you just built. You know them; leaving them
+out sends it back to asking you.
 **Without a completed verification this job is not finished** — a built but
 unmeasured component is not reported as done. Skill invocation is
 model-driven, not a guaranteed hand-off: if the skill does not come up, say so

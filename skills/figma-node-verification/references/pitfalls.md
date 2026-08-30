@@ -41,8 +41,8 @@ after a surprise.
 - **Unitless line height:** in a class (`leading-[1.4]`, `leading-none`) and in
   the `Font(…)` block the bare number is a **factor** × font size — that is how
   CSS reads it too. Only a *token* that resolves to a bare number (`"24"`) is
-  undecidable: Figma tokens are unitless by nature, so it may equally mean 24px
-  → gap, not a product.
+  undecidable: Figma tokens are unitless by nature, so it may equally mean 24px.
+  Record a gap; do not compute a product.
 - **`leading-[0]`** on a wrapper is a Figma artefact; the real line height is in
   the `Font(…)` block or on the inner text element.
 - **Bracketless borders are readable:** `border` alone means **1px** (the most

@@ -76,6 +76,12 @@ the axis it was derived for.
   text with its own metrics, and the browser renders the same font a fraction of
   a pixel to a few pixels differently.
 - **Fixed** (`w-[…]`, `h-[…]`, `size-[…]` on that axis): hard target.
+- **Pinned by a minimum** (`min-w-[…]`, `min-h-[…]` on that axis): if the
+  screenshot shows the content sitting narrower than that minimum, the minimum
+  is what sets the size — the axis behaves as fixed and the metadata size is a
+  hard target. Only when the content exceeds the minimum does the axis hug
+  again. Without this clause the everyday design-system card, sized by its
+  `min-w-`, falls through to "sizing mode undetermined".
 - **Fill** (`flex-[1_0_0]`, `w-full`, `h-full`, `size-full` **in the child
   view**; on the pulled root the same classes mean nothing): the metadata size
   is whatever the node happened to have in its Figma context — no hard target.

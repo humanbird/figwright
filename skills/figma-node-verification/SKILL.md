@@ -23,7 +23,9 @@ only, say so before touching a file.
 Three, all required: the node-accurate Figma link, a URL where the component
 renders, and a selector that hits exactly one element. Ask for whatever is
 missing instead of picking a route, a variant or an element yourself — that
-pick is what makes two competent agents measure two different things.
+pick is what makes two competent agents measure two different things. On a
+hand-off from the implementation skill, all three come from there; there is
+nothing left to ask.
 
 ## 1. Pull the target
 
@@ -87,14 +89,25 @@ although Figma specifies them — and a child with a screaming red border on a
 neon green ground yields a table indistinguishable from the correct one.
 
 So **when the design context carries children with their own `data-node-id` and
-their own box properties (`border…`, `bg-…`, `rounded-…`, `p…-`), run the same
-measurement for each** — own selector, own table block; the root header notes
-"N children measured, see below". A child with no findable counterpart reads
-`not measurable (no counterpart in the DOM)` rather than quietly disappearing.
-Leaf nodes without box properties (icons, plain text nodes) stay closed. But
-more than one text carrier means more than one text style — measure each
-carrier that has its own `data-node-id` as its own block, and name the ones you
-did not.
+their own box properties (`border…`, `bg-…`, `rounded-…`, `p…-`, `gap-…`,
+`gap-x-…`, `gap-y-…`), run the same measurement for each** — own selector, own
+table block; the root header notes "N children measured, see below". The gap
+classes belong in that list because a pure layout container often carries
+nothing else: leave them out and its gap is never measured, and the run reports
+`deviates 0` for a row it never looked at. A child with no findable counterpart
+reads `not measurable (no counterpart in the DOM)` rather than quietly
+disappearing. Leaf nodes without any of those properties (icons, plain text
+nodes) stay closed.
+
+More than one text carrier means more than one text style. The root block
+already covers carrier 1 — do not open a second block for it; carriers 2..n get
+one block each, and any you skip get named. That keeps the block count the same
+across runs.
+
+When one DOM element stands in for two Figma nodes — a wrapper and the carrier
+inside it collapsed into a single rendered element — measure the size rows
+against the wrapper and mark them `element stands in for its wrapper`, rather
+than reporting an unexplained context-size delta.
 
 ## 4. The table
 
@@ -135,8 +148,9 @@ chosen element, text carrier and how many carriers exist, viewport and
 `devicePixelRatio` (the 0.5px tolerance hangs off it), and how many children
 you measured on top. If your browser tool reports `0 × 0`, write "viewport not
 reported" — not the 0. Rows whose value you set yourself out of the metadata
-via technique A carry the note `set by technique A`; they otherwise only
-confirm themselves.
+via technique A carry the note `set by technique A`: their target and their
+actual come from the same number, so without the note the row reads as
+independent confirmation when it is none.
 
 ## 5. Working off
 
