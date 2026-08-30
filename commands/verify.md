@@ -9,8 +9,10 @@ Ohne `node-id` im Link geht es nicht weiter — dann frag nach einem knotengenau
 
 ## 1. Soll holen
 
-Über deinen Figma-MCP für genau diesen Knoten: `get_design_context`,
-`get_variable_defs`, `get_metadata`.
+`get_design_context` verlangt laut eigenem Tool-Vertrag, dass du zuvor die
+`figma-design-to-code`-Guidance lädst (Skill oder MCP-Resource) — auch wenn du
+diesen Command allein fährst. Lade sie, dann hol über deinen Figma-MCP für genau
+diesen Knoten: `get_design_context`, `get_variable_defs`, `get_metadata`.
 
 **Kontrollier zuerst, dass du den richtigen Knoten hast.** Die `data-node-id` am
 Wurzelelement des Design-Kontexts muss die node-id aus dem Link sein (`123-456`
@@ -18,9 +20,11 @@ im Link = `123:456` im Kontext). Stimmt sie nicht, misst du gegen einen fremden
 Knoten — sag es und hol den richtigen.
 
 Kommt statt Tailwind-Code gemappter Projektcode zurück, hat Code Connect
-gegriffen. Für die Messung brauchst du das rohe Design-Soll, nicht die
-Projekt-Übersetzung: hol den Kontext erneut mit `disableCodeConnect: true` und
-vermerk das im Tabellenkopf. Trägt das Wurzelelement auch dann keine
+gegriffen. Hol den Kontext erneut mit `disableCodeConnect: true` und vermerk das
+im Tabellenkopf. Das Tool bittet, diesen Schalter nur auf ausdrücklichen
+Nutzerwunsch zu setzen — der Wunsch liegt vor: wer diesen Command aufruft,
+verlangt eine Messung gegen das rohe Design-Soll, nicht gegen die
+Projekt-Übersetzung. Trägt das Wurzelelement auch dann keine
 `data-node-id`, gilt der Knoten aus `get_metadata` als Bezug — ebenfalls in den
 Kopf.
 
@@ -41,9 +45,12 @@ etwas anderes, sind sie neu zu prüfen. Lies daraus:
   (`"8"` = 8px). Steht der Token nirgends und gibt es keinen Rückfallwert:
   Lücke.
 - **`font-['Familie:Schnitt']`:** vor dem Doppelpunkt steht die Familie, danach
-  der Schnitt — `font-['Whyte:Regular']` heißt Familie Whyte, Schnitt Regular
-  (= 400), `:Bold` = 700, `:Medium` = 500. Das ist die Quelle für die
-  Schriftschnitt-Zeile, wenn keine eigene `font-[…]`-Gewichtsklasse dasteht.
+  der Schnitt — `font-['Whyte:Regular']` heißt Familie Whyte, Schnitt Regular.
+  Den Schnittnamen setzt du nach üblicher Zuordnung in ein CSS-Gewicht um:
+  Thin 100, ExtraLight 200, Light 300, Regular 400, Medium 500, SemiBold 600,
+  Bold 700, ExtraBold 800, Black 900. Das ist keine Rateübung, sondern die
+  Standardtabelle — und die Quelle für die Schriftschnitt-Zeile, wenn keine
+  eigene `font-[…]`-Gewichtsklasse dasteht.
 - **Textstil:** der `Font(family, style, size, weight, lineHeight, letterSpacing)`-
   Block aus den Variablen bzw. dem Hinweis „These styles are contained in the
   design" ist die verlässlichste Quelle für Zeilenhöhe und Laufweite. Dieselbe
@@ -53,12 +60,38 @@ etwas anderes, sind sie neu zu prüfen. Lies daraus:
   1 × Schriftgröße. Dasselbe gilt für `leading-none` (= Faktor 1) und
   `leading-[1.4]`. Unentscheidbar ist nur der Fall in den Fallstricken unten:
   ein *Token*, der zu einer nackten Zahl auflöst.
+- **Benannte Farben:** `white` = `#FFFFFF`, `black` = `#000000` — das sind
+  Tailwind-Grundfarben und stehen fest, egal was sonst geliefert wird. Nur für
+  **nicht-standardisierte** Namen ziehst du die Zeile „These styles are contained
+  in the design" und `get_variable_defs` heran. Erwarte dort keinen Treffer für
+  `white`/`black`: die Stilnamen sind frei vergeben (real gesehen: `W: #FFFFFF`,
+  `K: #000000`) und haben keinen Bezug zum Klassennamen. Wer hier auf eine Lücke
+  geht, lässt schwarzen statt weißen Text lautlos durch.
 - **Breite/Höhe:** stehen selten als Klasse. `get_metadata` liefert sie für den
-  Knoten (`width`/`height`). Das ist ein gültiges Soll, **solange der Knoten
-  eine feste Größe hat**. Hat er keine Größenklasse, ist er ein Hug-Knoten:
-  seine Breite ist Padding + der Text, wie **Figma** ihn ausmisst. Derselbe
-  Font rendert im Browser anders — Bruchteile bis wenige Pixel. Dann ist die
-  Metadaten-Breite ein **Richtwert**, kein hartes Soll (siehe Zustände unten).
+  Knoten (`width`/`height`). Ob das ein hartes Soll oder ein Richtwert ist,
+  hängt davon ab, wie der Knoten sich bemisst — und dafür ist entscheidend, aus
+  **welcher Perspektive** du den Design-Kontext gezogen hast:
+
+  - **Am gezogenen Wurzelelement ist `size-full` Generator-Boilerplate.** Der
+    Generator setzt sie jeder Wurzel unkonditional, unabhängig davon, wie der
+    Knoten sich bemisst. Sie ist dort **weder Hug- noch Füll-Indiz** — ignorier
+    sie vollständig.
+  - **Aussagekräftig ist die Kind-Ansicht:** derselbe Knoten, gezogen als Teil
+    seines Elternknotens. Dort schreibt der Generator, was wirklich gilt. Hast
+    du sie nicht, zieh den Elternknoten dazu oder entscheide über `get_metadata`
+    und den Screenshot.
+
+  In der Kind-Ansicht gilt dann:
+  - **Hug** (Größe folgt dem Inhalt): `shrink-0` **ohne** `w-`/`h-`/`size-`-Klasse
+    — oder Screenshot und Metadaten zeigen eine Größe, die genau Padding +
+    Inhalt ist. Dann ist die Metadaten-Größe ein **Richtwert**, kein hartes
+    Soll: Figma misst den Text mit eigener Metrik, der Browser rendert denselben
+    Font um Bruchteile bis wenige Pixel anders (siehe Zustände unten).
+  - **Fest** (`w-[…]`, `h-[…]`, `size-[…]`): hartes Soll.
+  - **Füllend** (`flex-[1_0_0]`, `w-full`, `h-full`, `size-full`): die
+    Metadaten-Größe ist die, die der Knoten im Figma-Kontext gerade hatte —
+    ebenfalls kein hartes Soll, siehe Fallstricke. `size-full` zählt **nur
+    hier**, nicht an der gezogenen Wurzel.
 
 **Nie raten.** Was du nicht wörtlich lesen kannst, wird zur Lücke mit Grund.
 Der Grund benennt, was du *nicht lesen konntest* — nie eine Design-Tatsache,
@@ -67,37 +100,50 @@ die du nicht geprüft hast. Also „kein `bg-…`-Wert im Design-Kontext", nicht
 
 ## 3. Ist messen — im echten Browser
 
-Sorg dafür, dass die Komponente unter einer erreichbaren URL rendert. Öffne sie
-mit deinem Browser-Tool und **leg zuerst alle Bewegung still**, sonst misst du
-einen Zwischenstand:
+Sorg dafür, dass die Komponente unter einer erreichbaren URL rendert. Setz das
+Fenster auf eine feste, notierte Breite — 1440 ist eine brauchbare Vorgabe, wenn
+das Design nichts anderes nahelegt; füllende Knoten hängen daran. Öffne die
+Seite mit deinem Browser-Tool und **leg zuerst alle Bewegung still**, sonst
+misst du einen Zwischenstand:
 
 ```js
 const s = document.createElement('style');
 s.textContent = '*,*::before,*::after{transition:none!important;animation:none!important}';
 document.head.appendChild(s);
-await document.fonts.ready;
+document.fonts.ready.then(() => 'bereit')
 ```
 
 Dann miss am gerenderten Element. Nimm einen Selektor, der genau deine
-Komponente trifft — und prüf, wie viele Elemente er trifft; gemessen wird sonst
-wortlos die erste von fünf Karten.
+Komponente trifft; der Block unten meldet die Trefferzahl selbst, damit du nicht
+wortlos die erste von fünf Karten misst.
 
 ```js
-const el = document.querySelector('<dein-selektor>');
-const c = getComputedStyle(el), r = el.getBoundingClientRect();
+const sel = '<dein-selektor>';
+const treffer = document.querySelectorAll(sel);
+const el = treffer[0];
+const c = el && getComputedStyle(el), r = el && el.getBoundingClientRect();
 // Textträger: erstes Element mit eigenem, nicht leerem Textknoten
-const tEl = [el, ...el.querySelectorAll('*')].find(n =>
+const tEl = el && [el, ...el.querySelectorAll('*')].find(n =>
   [...n.childNodes].some(k => k.nodeType === 3 && k.textContent.trim()));
 const t = tEl && getComputedStyle(tEl);
-({
+const kennung = n => n && (n.tagName.toLowerCase() +
+  (n.id ? '#' + n.id : '') + (n.className ? '.' + String(n.className).trim().split(/\s+/).join('.') : ''));
+!el ? { fehler: `Selektor trifft 0 Elemente: ${sel}` } : ({
+  treffer: treffer.length, element: kennung(el), textTraeger: kennung(tEl),
   breite: r.width, hoehe: r.height,
   layoutBreite: el.offsetWidth, layoutHoehe: el.offsetHeight,
   padding: [c.paddingTop, c.paddingRight, c.paddingBottom, c.paddingLeft],
-  gap: c.flexDirection.startsWith('row') ? c.columnGap : c.rowGap,
+  // Bei grid ist flexDirection immer "row" — deshalb beide Achsen zeigen.
+  gap: [c.columnGap, c.rowGap],
   display: c.display, flexDirection: c.flexDirection,
   radius: [c.borderTopLeftRadius, c.borderTopRightRadius,
            c.borderBottomRightRadius, c.borderBottomLeftRadius],
-  rahmen: [c.borderTopWidth, c.borderTopStyle, c.borderTopColor],
+  rahmenBreiten: [c.borderTopWidth, c.borderRightWidth,
+                  c.borderBottomWidth, c.borderLeftWidth],
+  rahmenStile: [c.borderTopStyle, c.borderRightStyle,
+                c.borderBottomStyle, c.borderLeftStyle],
+  rahmenFarben: [c.borderTopColor, c.borderRightColor,
+                 c.borderBottomColor, c.borderLeftColor],
   hintergrund: c.backgroundColor,
   schrift: t && [t.fontFamily, t.fontSize, t.fontWeight, t.lineHeight,
                  t.letterSpacing, t.color],
@@ -108,6 +154,12 @@ const t = tEl && getComputedStyle(tEl);
   viewport: [innerWidth, innerHeight, devicePixelRatio],
 })
 ```
+
+Der Block kommt ohne Top-Level-`await` aus; kann dein Werkzeug es, warte vor der
+Messung zusätzlich auf `document.fonts.ready`.
+
+Für den Gap gilt: bei `display: flex` zählt die Achse der `flexDirection`
+(`row…` → `columnGap`, sonst `rowGap`), bei `display: grid` beide.
 
 Zu den Istwerten:
 
@@ -126,6 +178,23 @@ Zu den Istwerten:
   vergleichbar → nicht messbar, mit beiden Zahlen im Grund.
 - Sind die vier Radien oder Rahmenkanten verschieden, zeig sie einzeln.
 - Schriftfamilie: verglichen wird nur der **erste** Eintrag des Stacks.
+
+### Das Innenleben mitmessen — sonst misst du eine leere Hülle
+
+Bei vielen Knoten trägt die Wurzel gar kein Design: Rahmen, Füllung, Radius und
+Innenabstände sitzen im Kind. Misst du nur die Wurzel, melden sechs Zeilen
+„Soll unbelegt", obwohl Figma sie belegt — und ein Kind mit knallrotem Rahmen
+auf neongrünem Grund erzeugt eine Tabelle, die von der korrekten nicht zu
+unterscheiden ist.
+
+Deshalb: **Trägt der Design-Kontext Kind-Elemente mit eigener `data-node-id`
+**und** eigenen Kasten-Eigenschaften (`border…`, `bg-…`, `rounded-…`, `p…-`),
+fährst du für jedes dieser Kinder dieselbe Messung** — eigener Selektor auf das
+gerenderte Gegenstück, eigener Tabellenblock, Textträger-Kniff wie gehabt. Die
+Wurzel-Tabelle vermerkt im Kopf „N Kind-Elemente gemessen, s. u.".
+
+Nicht jede Ebene: Blattknoten ohne eigene Kasten-Eigenschaften (Icons, reine
+Textknoten) werden nicht einzeln aufgemacht.
 
 ## 4. Tabelle
 
@@ -159,32 +228,40 @@ Toleranzen:
   Bei der Rahmenbreite steht am meisten auf dem Spiel: ihr Werteraum ist
   0/1/2 px, jede Nachsicht winkt einen um 50 % zu dicken Rahmen durch.
 - **Farben: 0**, auch im Alphakanal.
-- **Hug-Knoten, Breite und Höhe: Richtwert.** Hat der Knoten keine Größenklasse,
-  stammt das Soll aus Figmas eigener Textmessung (siehe Schritt 2). Eine
-  Differenz von wenigen Pixeln ist dann Font-Rendering, kein Baufehler. Zustand
-  `Richtwert (Δ …, Hug-Knoten)` — die Zeile wird gezeigt, löst aber keine Arbeit
-  aus; das gilt auch bei `Δ 0px`, der Zustand bleibt dann `Richtwert (Δ 0px)`
-  und wird nicht zu `stimmt`. Ohne diese Regel „behebst" du eine
-  Font-Rendering-Differenz — genau das, was der Loop nicht tun soll.
-  **Ausnahme:** Übersteigt die Differenz **2 % der Sollbreite UND 3 px**, kommt
-  sie nicht mehr aus dem Textsatz (ein fehlendes Padding oder ein zerschossenes
-  Layout erklärt sie besser). Dann ist der Zustand `weicht ab` und die Zeile
-  löst Arbeit aus wie jede andere. Beide Schwellen müssen überschritten sein:
-  2 % von 67 px sind 1,3 px und liegen unter der normalen Drift zwischen Figmas
-  und Chromes Textmetrik — allein gälte die Regel genau dort, wo sie schützen soll.
+- **Hug-Knoten, Breite und Höhe: Richtwert.** Bemisst sich der Knoten nach
+  seinem Inhalt (Erkennung siehe Schritt 2), stammt das Soll aus Figmas eigener
+  Textmessung. Eine Differenz von wenigen Pixeln ist dann Font-Rendering, kein
+  Baufehler. Zustand `Richtwert (Δ …, Hug-Knoten)` — die Zeile wird gezeigt,
+  löst aber keine Arbeit aus; das gilt auch bei `Δ 0px`, der Zustand bleibt dann
+  `Richtwert (Δ 0px)` und wird nicht zu `stimmt`. Ohne diese Regel „behebst" du
+  eine Font-Rendering-Differenz — genau das, was der Loop nicht tun soll.
+  **Ausnahme:** Übersteigt die Differenz **2 % der Soll-Größe derselben Achse
+  UND 3 px** (Breite gegen Sollbreite, Höhe gegen Sollhöhe), kommt sie nicht
+  mehr aus dem Textsatz. Dann ist der Zustand `weicht ab` und die Zeile löst
+  Arbeit aus wie jede andere. Beide Schwellen müssen fallen: 2 % von 67 px sind
+  1,3 px und liegen unter der normalen Drift zwischen Figmas und Chromes
+  Textmetrik — allein gälte die Regel genau dort, wo sie schützen soll.
+  Ein zu dicker Rahmen im Kind rutscht hier nicht durch: die Kind-Messung aus
+  Schritt 3 zeigt ihn an seiner eigenen Rahmenzeile mit Toleranz 0.
 
 Schreib in den Kopf der Tabelle, was du gemessen hast: Knoten-ID, URL,
 Selektor und wie viele Elemente er trifft, gewähltes Element, Textträger,
-Viewport und `devicePixelRatio` (die 0,5-px-Toleranz hängt daran). Meldet dein
-Browser-Tool `0 × 0`, schreib „Viewport nicht gemeldet" — nicht die 0.
+Viewport und `devicePixelRatio` (die 0,5-px-Toleranz hängt daran), und wie viele
+Kind-Elemente du zusätzlich gemessen hast. Meldet dein Browser-Tool `0 × 0`,
+schreib „Viewport nicht gemeldet" — nicht die 0.
+
+Zeilen, deren Wert du nach Technik A (siehe Fallstricke) selbst aus den
+Metadaten gesetzt hast, tragen den Vermerk `durch Technik A festgesetzt`. Sie
+bestätigen sonst nur sich selbst.
 
 ## 5. Abarbeiten
 
 Nur **`weicht ab`** löst Arbeit aus. Beheben, dann **neu messen** — nicht die
 alte Tabelle fortschreiben. Wiederholen, bis keine Zeile mehr abweicht, höchstens
-aber drei Runden: bleibt danach etwas offen, hör auf zu drehen und leg die
-Zeilen mit deiner Diagnose vor. Was du nicht sauber bekommst, ohne gegen das
-Design zu verbiegen, bleibt stehen und wird benannt.
+aber drei Runden — **hier wird gezählt, und nur hier**: bleibt danach etwas
+offen, hör auf zu drehen und leg die Zeilen mit deiner Diagnose vor. Was du
+nicht sauber bekommst, ohne gegen das Design zu verbiegen, bleibt stehen und
+wird benannt.
 
 **`Soll unbelegt` ist kein Fehler und wird nicht „vorsichtshalber" angepasst.**
 Meist gibt es nichts nachzuholen: Figma nennt die Eigenschaft schlicht nicht,
@@ -224,7 +301,9 @@ tragbar ist, entscheidest du und berichtest es.
   unabhängig von der Reihenfolge der Klassen.
 - **`gap-x` und `gap-y` verschieden:** dann hängt der geltende Wert von der
   Layout-Richtung ab, die der Kontext nicht nennt → Lücke, nicht raten.
-- **Füllender Knoten** (`size-full`, `w-full`, `flex-[1_0_0]`): die Größe aus
+- **Füllender Knoten** — erkannt **nur in der Kind-Ansicht** (`w-full`,
+  `h-full`, `size-full`, `flex-[1_0_0]`); dieselben Klassen an der gezogenen
+  Wurzel sind Boilerplate und bedeuten nichts, siehe Schritt 2. Die Größe aus
   `get_metadata` ist die, die er im Figma-Kontext gerade hatte, keine feste
   Vorgabe. Nimm sie, aber sag dazu, dass eine Abweichung hier zu prüfen und
   nicht automatisch ein Befund ist.
@@ -235,14 +314,17 @@ tragbar ist, entscheidest du und berichtest es.
   das kann ebenso 24px meinen → Lücke, kein Produkt.
 - **`leading-[0]`** an einem Wrapper ist ein Figma-Artefakt; die echte
   Zeilenhöhe steht im `Font(…)`-Block oder am inneren Textelement.
-- **Nicht-arbiträre Klassen sind lesbar, nicht Lücke.** Sie stammen aus Figmas
-  Generator, nicht aus der Tailwind-Konfiguration deines Projekts, und haben
-  dort feste Bedeutung: `border-<n>`, `p-<n>`, `gap-<n>`, `rounded-<n>` und
-  Geschwister heißen **n Pixel** — `border-10` ist ein 10-px-Rahmen und wird
-  gemessen. Benannte Farben (`text-white`, `bg-black`) löst du über die Zeile
-  „These styles are contained in the design" und `get_variable_defs` auf.
-  Lücke ist nur, was an keiner dieser Stellen auftaucht; dann nenn die Klasse
-  im Grund. Behandelst du solche Klassen pauschal als Lücke, läuft ein zu
-  dicker Rahmen ungemessen durch und die Tabelle meldet ein Falsch-Bestanden.
+- **Rahmen ohne Klammern sind lesbar:** `border` allein heißt **1 px** (der
+  häufigste Generator-Output für einen 1-px-Stroke), `border-<n>` heißt **n px**
+  — `border-10` ist ein 10-px-Rahmen und wird gemessen. Behandelst du das als
+  Lücke, läuft ein zu dicker Rahmen ungemessen durch und die Tabelle meldet ein
+  Falsch-Bestanden.
+- **`p-<n>`, `gap-<n>`, `rounded-<n>` ohne Klammern: Lücke.** Der Generator
+  schreibt diese Werte durchgängig arbiträr (`gap-[20px]`, nicht `gap-5`), es
+  gibt also keine Evidenz, was eine klammerlose Form bedeuten soll — und die
+  einzige verfügbare Semantik spricht dagegen: in Tailwind ist `p-4` gleich
+  16 px, nicht 4 px. Als „n Pixel" gelesen misst du gegen ein um Faktor 4
+  falsches Soll und reparierst eine korrekte Komponente kaputt. Lücke, mit
+  genau dieser Begründung und der Klasse im Grund.
 - **Zwei `border-[…]`-Klassen:** eine ist die Breite, eine die Farbe. Ordne
   nach dem aufgelösten Wert zu, nicht nach der Reihenfolge.

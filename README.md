@@ -6,8 +6,8 @@ property-genau gegen ihren Figma-Knoten messen.
 Figma-MCP und ein Screenshot-Loop bringen dich auf „sieht ungefähr gleich aus".
 sollwert sagt dir: `font-size` ist 15 statt 16 — Zeile für Zeile, mit Zahlen.
 
-Kein Code, keine Abhängigkeiten, keine Tokens, keine Konfiguration. Das ganze
-Werkzeug sind zwei Markdown-Dateien: der Agent zieht das Soll über seinen
+Kein Code, keine Abhängigkeiten, keine API-Tokens, keine Konfiguration. Das
+ganze Werkzeug sind zwei Markdown-Dateien: der Agent zieht das Soll über seinen
 Figma-MCP und misst das Ist mit seinen eigenen Browser-Tools.
 
 ## Drei Schritte
@@ -29,6 +29,13 @@ Figma-MCP und misst das Ist mit seinen eigenen Browser-Tools.
 des Projekts und fährt danach `/sollwert:verify`. Das misst und legt die
 Tabelle vor.
 
+## Nur messen
+
+`/sollwert:verify <figma-link mit node-id>` läuft auch allein — gegen eine
+Komponente, die schon gebaut ist, egal von wem. Es braucht nur den Figma-Knoten
+und eine URL, unter der die Komponente rendert; gebaut oder geändert wird
+dabei nichts.
+
 ## Die Tabelle
 
 ```
@@ -46,7 +53,7 @@ Tabelle vor.
 | **weicht ab** | Beide Werte liegen vor und unterscheiden sich. Das Einzige, was Arbeit auslöst. |
 | **Soll unbelegt (Grund)** | Figma gibt dazu nichts her. **Kein Fehler** — nicht raten, nicht anpassen. |
 | **nicht messbar (Grund)** | Die Seite gibt den Wert nicht her — meist das falsche Element. Selektor schärfen. |
-| **Richtwert (Hug-Knoten)** | Breite/Höhe ohne feste Größe stammen aus Figmas eigener Textmessung. Wird gezeigt, löst keine Arbeit aus. |
+| **Richtwert (Δ …, Hug-Knoten)** | Breite/Höhe eines inhaltsbemessenen Knotens stammen aus Figmas eigener Textmessung. Wird gezeigt, löst keine Arbeit aus. |
 
 Toleranzen: Typografie 0,1 px; Breite/Höhe 0,5 px (Gerätepixel-Rundung);
 Innenabstände, Gap, Radius und Rahmenbreite 0; Farben 0, auch im Alphakanal.

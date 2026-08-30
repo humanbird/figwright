@@ -29,10 +29,11 @@ Zusätzlich zu `get_design_context` brauchst du für die spätere Messung
 
 ## 3. Renderstelle — gehört zum Auftrag
 
-`/sollwert:verify` misst im echten Browser. Also lieferst **du** die Stelle mit,
-an der die Komponente rendert: eine erreichbare URL auf einem laufenden
-Dev-Server, und die Schrift des Designs real eingebunden — ohne sie werden
-Fallback-Metriken gemessen und die Tabelle meldet Unsinn.
+`verify` misst im echten Browser. Also lieferst **du** die Stelle mit, an der
+die Komponente rendert: eine erreichbare URL auf einem laufenden Dev-Server, und
+die Schrift des Designs real eingebunden — ohne sie werden Fallback-Metriken
+gemessen und die Tabelle meldet Unsinn. Rechne damit, die Schrift erst
+beschaffen zu müssen; im System ist sie oft nicht.
 
 Gibt es schon eine Route, eine Story oder eine Sandbox, die die Komponente
 zeigt, nimm die; eine eigene Demo-Seite legst du nur an, wenn nichts davon
@@ -42,13 +43,13 @@ Läuft die URL nicht, brich hier ab und sag warum. Rate nicht weiter.
 
 ## 4. Messen
 
-Fahr direkt danach `/sollwert:verify $ARGUMENTS` und arbeite die Abweichungen
-ab. **Ohne durchlaufenen Verify ist `/sollwert:implement` nicht fertig** — eine
-gebaute, aber ungemessene Komponente wird nicht als erledigt gemeldet.
+Fahr direkt danach `/sollwert:verify $ARGUMENTS` (als kopierte Dateien:
+`/verify`) und arbeite die Abweichungen ab. **Ohne durchlaufenen Verify ist
+dieser Command nicht fertig** — eine gebaute, aber ungemessene Komponente wird
+nicht als erledigt gemeldet.
 
-Kommst du nach drei Runden nicht auf null Abweichungen, hör auf zu drehen und
-leg die verbleibenden Zeilen mit deiner Diagnose vor. Zeig die letzte Tabelle
-vollständig; von den Zwischenrunden genügt, was sich geändert hat.
+Den Rundendeckel führt `verify` selbst; zähl hier nicht mit. Zeig am Ende die
+letzte Tabelle vollständig; von den Zwischenrunden genügt, was sich geändert hat.
 
 Berichte am Ende: geänderte Dateien, welche Projekt-Tokens auf welche
 Figma-Tokens gehen, die Renderstelle (URL und wie man sie startet), und was aus
