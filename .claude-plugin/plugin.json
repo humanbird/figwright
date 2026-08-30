@@ -1,11 +1,11 @@
 {
-  "name": "sollwert",
-  "version": "0.1.0",
-  "description": "Zwei Slash-Commands, die eine gebaute Komponente property-genau gegen ihren Figma-Knoten messen — ohne eigenen Code, ohne Tokens, ohne Setup.",
+  "name": "figwright",
+  "version": "0.2.0",
+  "description": "Two skills that measure a built component against its Figma node in a real browser, property by property — no code of its own, no tokens, no setup.",
   "author": {
     "name": "Uwe Heinrichs"
   },
-  "homepage": "https://github.com/humanbird/sollwert",
+  "homepage": "https://github.com/humanbird/figwright",
   "license": "MIT",
-  "keywords": ["figma", "design-tokens", "soll-ist", "slash-commands"]
+  "keywords": ["figma", "design-tokens", "design-qa", "skills"]
 }

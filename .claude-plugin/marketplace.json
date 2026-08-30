@@ -1,16 +1,16 @@
 {
-  "name": "sollwert",
-  "description": "Soll/Ist-Abgleich zwischen Figma-Knoten und gebauter Komponente",
+  "name": "figwright",
+  "description": "Target/actual comparison between a Figma node and the component built from it",
   "owner": {
     "name": "Uwe Heinrichs",
     "url": "https://github.com/humanbird"
   },
   "plugins": [
     {
-      "name": "sollwert",
+      "name": "figwright",
       "source": "./",
-      "description": "Zwei Slash-Commands, die eine gebaute Komponente im echten Browser property-genau gegen ihren Figma-Knoten messen",
-      "version": "0.1.0",
+      "description": "Two skills that measure a built component in a real browser against its Figma node, property by property",
+      "version": "0.2.0",
       "category": "development"
     }
   ]
